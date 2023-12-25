@@ -1,7 +1,8 @@
+# If platform is windows
 # C:/"Program Files"/altera/13.1/quartus/bin/cygwin/bin/bash
 # cd tooling
 # ./xpack/bin/make
-
+PLATFORM_WINDOWS=1
 SIMUL_TOP_LEVEL_MODULE = top
 SIMUL_LIB = work
 # 1 (yes) -> override timescale
@@ -18,8 +19,13 @@ SIMUL_IS_QUESTA_USED = 0
 # either empty variable or path ending with \\ i.e. double backslash
 # C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\ 
 # C:\\"Program Files"\\questasim64_10.4c\\win64\\ 
-# C:\\Program1\\questasim64_10.7c\\win64\\ 
+# C:\\Program1\\questasim64_10.7c\\win64\\
+ 
+ifeq ($(PLATFORM_WINDOWS), 1)
+
 SIMUL_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\
+
+endif
 
 # DE0_TOP (CycloneIII)
 # DE0_CV_TOP (CycloneV)
@@ -35,7 +41,12 @@ SYNTH_CYCLONE5_DEFAULT_ASSIGNMENT_FILE = ./config/boards/cyclone5/assignment_def
 SYNTH_CYCLONE5_CONSTRAINTS_FILE = ./config/boards/cyclone5/DE0_CV_TOP.sdc
 # either empty variable or path ending with \\ i.e. double backslash
 # C:\\"Program Files"\\altera\\13.1\\quartus\\bin\\ 
+
+ifeq ($(PLATFORM_WINDOWS, 1))
+
 SYNTH_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\quartus\\bin\\
+
+endif
 
 LIST_FILE_ICARUS = ./config/list-icarus-verilog.lst
 LIST_FILE_SIMUL = ./config/list-src-files-simul.lst
@@ -112,10 +123,19 @@ create_src_file_list = $(addprefix ../,$(strip $(file < $(1))))
 
 SIMUL_TAG = ***[SIMULATION]***
 
-SIMUL_TOOL_VLIB = $(SIMUL_TOOL_EXE_DIR_PATH)vlib.exe
-SIMUL_TOOL_VLOG = $(SIMUL_TOOL_EXE_DIR_PATH)vlog.exe
-SIMUL_TOOL_VOPT = $(SIMUL_TOOL_EXE_DIR_PATH)vopt.exe
-SIMUL_TOOL_VSIM = $(SIMUL_TOOL_EXE_DIR_PATH)vsim.exe
+SIMUL_TOOL_VLIB = $(SIMUL_TOOL_EXE_DIR_PATH)vlib
+SIMUL_TOOL_VLOG = $(SIMUL_TOOL_EXE_DIR_PATH)vlog
+SIMUL_TOOL_VOPT = $(SIMUL_TOOL_EXE_DIR_PATH)vopt
+SIMUL_TOOL_VSIM = $(SIMUL_TOOL_EXE_DIR_PATH)vsim
+
+ifeq ($(PLATFORM_WINDOWS), 1)
+
+SIMUL_TOOL_VLIB = $(SIMUL_TOOL_VLIB).exe
+SIMUL_TOOL_VLOG = $(SIMUL_TOOL_VLOG).exe
+SIMUL_TOOL_VOPT = $(SIMUL_TOOL_VOPT).exe
+SIMUL_TOOL_VSIM = $(SIMUL_TOOL_VSIM).exe
+
+endif
 
 SIMUL_SRC_FILE_LIST = $(call create_src_file_list,$(LIST_FILE_SIMUL))
 # $(info $(SIMUL_SRC_FILE_LIST))
