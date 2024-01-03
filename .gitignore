@@ -1,1 +1,6 @@
-tooling/xpack/*
+tooling/*
+!tooling/config
+!tooling/makefile
+!tooling/mem_init.mif
+VLSI_PREDAJA/*
+projekat.zip

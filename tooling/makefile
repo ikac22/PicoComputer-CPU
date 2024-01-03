@@ -25,6 +25,10 @@ ifeq ($(PLATFORM_WINDOWS), 1)
 
 SIMUL_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\
 
+else
+
+SIMUL_TOOL_EXE_DIR_PATH = /home/ikac/shared/apps/ModelSim/modelsim_ase/bin/
+
 endif
 
 # DE0_TOP (CycloneIII)
@@ -42,9 +46,13 @@ SYNTH_CYCLONE5_CONSTRAINTS_FILE = ./config/boards/cyclone5/DE0_CV_TOP.sdc
 # either empty variable or path ending with \\ i.e. double backslash
 # C:\\"Program Files"\\altera\\13.1\\quartus\\bin\\ 
 
-ifeq ($(PLATFORM_WINDOWS, 1))
+ifeq ($(PLATFORM_WINDOWS), 1)
 
 SYNTH_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\quartus\\bin\\
+
+else
+
+SYNTH_TOOL_EXE_DIR_PATH = /home/ikac/shared/QuartusWeb/quartus/linux64/
 
 endif
 
@@ -237,6 +245,21 @@ SYNTH_TOOL_ASM = $(SYNTH_TOOL_EXE_DIR_PATH)quartus_asm
 SYNTH_TOOL_STA = $(SYNTH_TOOL_EXE_DIR_PATH)quartus_sta
 SYNTH_TOOL_CDB = $(SYNTH_TOOL_EXE_DIR_PATH)quartus_cdb
 SYNTH_TOOL_PGM = $(SYNTH_TOOL_EXE_DIR_PATH)quartus_pgm
+
+ifeq ($(PLATFORM_WINDOWS), 0)
+
+SYNTH_LIBS_PRELOAD = LD_LIBRARY_PATH=/home/ikac/shared/QuartusWeb/quartus/linux64
+
+SYNTH_TOOL_SH = $(SYNTH_LIBS_PRELOAD) $(SYNTH_TOOL_EXE_DIR_PATH)quartus_sh
+SYNTH_TOOL_MAP = $(SYNTH_LIBS_PRELOAD) $(SYNTH_TOOL_EXE_DIR_PATH)quartus_map
+SYNTH_TOOL_FIT = $(SYNTH_LIBS_PRELOAD) $(SYNTH_TOOL_EXE_DIR_PATH)quartus_fit
+SYNTH_TOOL_ASM = $(SYNTH_LIBS_PRELOAD) $(SYNTH_TOOL_EXE_DIR_PATH)quartus_asm
+SYNTH_TOOL_STA = $(SYNTH_LIBS_PRELOAD) $(SYNTH_TOOL_EXE_DIR_PATH)quartus_sta
+SYNTH_TOOL_CDB = $(SYNTH_LIBS_PRELOAD) $(SYNTH_TOOL_EXE_DIR_PATH)quartus_cdb
+SYNTH_TOOL_PGM = $(SYNTH_LIBS_PRELOAD) $(SYNTH_TOOL_EXE_DIR_PATH)quartus_pgm
+
+endif
+
 
 SYNTH_SRC_FILE_LIST = $(call create_src_file_list,$(LIST_FILE_SYNTH))
 # $(info $(SYNTH_SRC_FILE_LIST))

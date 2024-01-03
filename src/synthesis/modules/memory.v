@@ -5,18 +5,29 @@ module memory #(
 )(
     input clk,
     input we,
+    input rst_n,
     input [ADDR_WIDTH - 1:0] addr,
     input [DATA_WIDTH - 1:0] data,
     output reg [DATA_WIDTH - 1:0] out
 );
 
+    integer i;
+
 	(* ram_init_file = FILE_NAME *) reg [DATA_WIDTH - 1:0] mem [2**ADDR_WIDTH - 1:0];
 
-    always @(posedge clk) begin
-        if (we) begin
-            mem[addr] = data;
+    always @(posedge clk, negedge rst_n) begin
+        if(!rst_n) begin
+            for(i = 0; i < 8; i = i + 1)
+                mem[i] <= 16'd0;
         end
-        out <= mem[addr];
+        else begin
+            if (we) 
+                mem[addr] <= data;
+            else 
+                mem[addr] <= mem[addr]; 
+        end
     end
+
+    assign out = mem[addr];
 
 endmodule

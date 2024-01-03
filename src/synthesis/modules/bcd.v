@@ -1,0 +1,30 @@
+module bcd (
+    input [5:0] in,
+    output [3:0] reg ones,
+    output [3:0] reg tens
+);
+
+    reg [5:0] bin;
+    integer i; 
+
+    // DOUBLE DABBLE
+    always @(in) begin
+        {tens, ones, bin} = {4'h0, 4'h0, 6'h00};
+    
+        for(i = 0; i < 6; i = i + 1) begin
+            // Every shift will be checked except last
+            if(tens > 4)
+                tens = tens + 4'd3;
+            else
+                tens = tens;
+
+            if(ones > 4)
+                ones = ones + 4'd3;    
+            else
+                ones = ones;
+            
+            {tens, ones, bin} = {tens, ones, bin} << 1;
+        end
+    end
+
+endmodule
