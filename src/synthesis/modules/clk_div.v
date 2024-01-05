@@ -1,5 +1,5 @@
 module moduleName #(
-    parameter DIVISOR = 50_000_000; 
+    parameter DIVISOR = 50_000_000
 ) (
     input clk,
     input rst_n,

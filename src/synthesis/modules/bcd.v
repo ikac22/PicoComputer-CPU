@@ -1,7 +1,7 @@
 module bcd (
     input [5:0] in,
-    output [3:0] reg ones,
-    output [3:0] reg tens
+    output reg [3:0]  ones,
+    output reg [3:0] tens
 );
 
     reg [5:0] bin;

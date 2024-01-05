@@ -2,7 +2,7 @@ module red (
     input clk,
     input rst_n,
     input in,
-    output out,
+    output out
 );
 
     reg ff1_next, ff1_reg;

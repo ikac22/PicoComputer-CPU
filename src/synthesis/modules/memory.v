@@ -3,12 +3,12 @@ module memory #(
     parameter ADDR_WIDTH = 6,
     parameter DATA_WIDTH = 16
 )(
-    input clk,
-    input we,
-    input rst_n,
-    input [ADDR_WIDTH - 1:0] addr,
-    input [DATA_WIDTH - 1:0] data,
-    output reg [DATA_WIDTH - 1:0] out
+    input                     clk,
+    input                     we,
+    input                     rst_n,
+    input  [ADDR_WIDTH - 1:0] addr,
+    input  [DATA_WIDTH - 1:0] data,
+    output [DATA_WIDTH - 1:0] out
 );
 
     integer i;
