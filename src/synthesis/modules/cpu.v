@@ -17,26 +17,24 @@ module cpu #(
     output     [ADDR_WIDTH-1:0] sp
 );
 
-    reg [ADDR_WIDTH-1:0]  inPC;
     reg                   ldPC;
     reg                   incPC;
 
     register #(.DATA_WIDTH(ADDR_WIDTH)) u_pc(
         .clk(clk),
         .ld(ldPC),
-        .in(inPC),
+        .in(6'd8),
         .inc(incPC),
         .out(pc)
     );
 
     reg                   ldSP;
-    reg [ADDR_WIDTH-1:0] inSP;
     reg                   incSP;
     register #(.DATA_WIDTH(ADDR_WIDTH)) u_sp(
         .clk(clk),
         .rst_n(rst_n),
         .ld(ldSP),
-        .in(inSP),
+        .in(),
         .out(sp),
         .inc(incSp)
     );
@@ -496,8 +494,6 @@ module cpu #(
         // // $display("CLK");
         if(!rst_n) begin
             // $display("RST");
-            inPC <= 8;
-            inSP <= 0;
             fsm_state <= 0;
             currOp <= 0;
             out <= 0;
