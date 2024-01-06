@@ -209,18 +209,20 @@ module DE0_TOP
 	//=======================================================
 	//  Structural coding
 	//=======================================================
-	
-	// top #(
-	// 	.DIVISOR(50_000_000),
-	// 	.FILE_NAME("mem_init.mif"),
-	// 	.ADDR_WIDTH(6),
-	// 	.DATA_WIDTH(16)
-	// ) top_inst (
-	// 	.clk(CLOCK_50),
-	// 	.btn(~BUTTON[2:0]),
-	// 	.sw(SW[9:0]),
-	// 	.led(LEDG[9:0]),
-	// 	.hex({HEX3_D, HEX2_D, HEX1_D, HEX0_D})
-	// );
+
+
+	top #(
+		.DIVISOR(50_000_000),
+		.FILE_NAME("mem_init.mif"),
+		.ADDR_WIDTH(6),
+		.DATA_WIDTH(16)
+	) top_inst (
+		.clk(CLOCK_50),
+		.btn(~BUTTON[2:0]),
+		.rst_n(SW[9]),
+		.sw(SW[8:0]),
+		.led(LEDG[9:0]),
+		.hex({HEX3_D, HEX2_D, HEX1_D, HEX0_D})
+	);
 
 endmodule

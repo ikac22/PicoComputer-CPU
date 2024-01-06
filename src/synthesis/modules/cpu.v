@@ -17,11 +17,11 @@ module cpu #(
     output     [ADDR_WIDTH-1:0] sp
 );
 
-    reg                   inPC;
+    reg [ADDR_WIDTH-1:0]  inPC;
     reg                   ldPC;
     reg                   incPC;
 
-    register #(.DATA_WIDTH(6)) u_pc(
+    register #(.DATA_WIDTH(ADDR_WIDTH)) u_pc(
         .clk(clk),
         .ld(ldPC),
         .in(inPC),
@@ -30,18 +30,21 @@ module cpu #(
     );
 
     reg                   ldSP;
-    register #(.DATA_WIDTH(6)) u_sp(
+    reg [ADDR_WIDTH-1:0] inSP;
+    reg                   incSP;
+    register #(.DATA_WIDTH(ADDR_WIDTH)) u_sp(
         .clk(clk),
         .rst_n(rst_n),
         .ld(ldSP),
-        .in(),
-        .out(sp)
+        .in(inSP),
+        .out(sp),
+        .inc(incSp)
     );
 
-    wire [31:0] ir;
-    reg  [31:0] inIR;
-    reg         ldIR;
-    register #(.DATA_WIDTH(32)) u_ir(
+    wire [DATA_WIDTH*2-1:0] ir;
+    reg  [DATA_WIDTH*2-1:0] inIR;
+    reg                     ldIR;
+    register #(.DATA_WIDTH(DATA_WIDTH*2)) u_ir(
         .clk(clk),
         .rst_n(rst_n),
         .ld(ldIR),
@@ -51,7 +54,7 @@ module cpu #(
 
     reg [ADDR_WIDTH-1:0] inMAR;
     reg                  ldMAR;
-    register #(.DATA_WIDTH(6)) u_mar(
+    register #(.DATA_WIDTH(ADDR_WIDTH)) u_mar(
         .clk(clk),
         .rst_n(rst_n),
         .ld(ldMAR),
@@ -62,24 +65,17 @@ module cpu #(
     reg  [DATA_WIDTH-1:0] inMDR;
     reg                   ldMDR;
     wire [DATA_WIDTH-1:0] mdr;
-    register #(.DATA_WIDTH(16)) u_mdr(
+    register #(.DATA_WIDTH(DATA_WIDTH)) u_mdr(
         .clk(clk),
         .rst_n(rst_n),
         .ld(ldMDR),
         .in(inMDR),
-        .out(mdr)
-    );
-
-    register #(.DATA_WIDTH(16)) u_a(
-        .clk(clk),
-        .rst_n(rst_n),
-        .in(inA),
-        .out(a)
+        .out(mem_in)
     );
 
     wire [DATA_WIDTH-1:0] tmp1;
     reg                   ldTMP1;
-    register #(.DATA_WIDTH(16)) u_tmp1(
+    register #(.DATA_WIDTH(DATA_WIDTH)) u_tmp1(
         .clk(clk),
         .rst_n(rst_n),
         .in(mem_data),
@@ -100,7 +96,7 @@ module cpu #(
     wire [DATA_WIDTH-1:0] acc;
     reg                   ldA;
     reg  [DATA_WIDTH-1:0] inA;
-    register #(.DATA_WIDTH(16)) u_acc(
+    register #(.DATA_WIDTH(DATA_WIDTH)) u_acc(
         .clk(clk),
         .rst_n(rst_n),
         .in(inA),
@@ -110,136 +106,171 @@ module cpu #(
 
     wire [DATA_WIDTH-1:0] alu_out;
     reg  [2:0]            alu_oc;
-    alu #(.DATA_WIDTH(16)) u_alu(
-        .oc(ir[30:28]),
+    alu #(.DATA_WIDTH(DATA_WIDTH)) u_alu(
+        .oc(ir[30:28] - 3'd1),
         .a(acc),
         .b(mem_data),
         .f(alu_out)
     );
 
-    reg [3:0] fsm_state;
-    reg [3:0] fsm_state_next;
 
-    integer opInd, opEnd, bitInd;
+    reg [3:0]             fsm_state;
+    reg [3:0]             fsm_state_next;
+    reg [DATA_WIDTH-1:0]  out_next;
+    reg [1:0]             currOp_next;
 
     wire [3:0] opCode;
     wire [2:0] opAddr1, opAddr2, opAddr3;
     reg  [2:0] currOpAddr;
     reg  [1:0] currOp;
     reg        currOpMode;
+    
 
-    assign opAddr1 = ir[26:24];
-    assign opAddr2 = ir[22:20];
-    assign opAddr3 = ir[18:16];
-    assign opCode  = ir[31:28];
+    assign opAddr1 = ir[DATA_WIDTH+10:DATA_WIDTH+8];
+    assign opAddr2 = ir[DATA_WIDTH+6:DATA_WIDTH+4];
+    assign opAddr3 = ir[DATA_WIDTH+2:DATA_WIDTH];
+    assign opCode  = ir[DATA_WIDTH*2-1:DATA_WIDTH*2-4];
 
     always @(*) begin
-        ldPC = 0;
-        inMAR = 0;
-        ldMAR = 0;
-        ldIR = 0;
-        ldTMP1 = 0;
-        // ldTMP2 = 0;
-        ldA = 0;
+        incPC = 'd0;
+        inIR = 'd0;
+        ldPC = 'd0;
+        ldIR = 'd0;
+        ldTMP1 = 'd0;
+        inA = 'd0;
+        ldA = 'd0;
+        incSP = 'd0;
+
+        inMAR = 'd0;
+        ldMAR = 'd0;
+        ldMDR = 'd0;
+        inMDR = 'd0;
+        mem_we = 'd0;
+    
+        currOp_next = currOp;
+        currOpMode = 'd0;
+        currOpAddr = 'd0;
         
+        out_next = out;
+        fsm_state_next = fsm_state;
+
         case(fsm_state)
             // RESET
             'd0: begin
                 ldPC = 1;
-
+                // $display("start");
                 fsm_state_next = 'd1;
             end
-            // IF
+            // IF0 (MEMORY ACCESS)
             'd1: begin
+                // $display("IF0");
                 inMAR = pc;
                 ldMAR = 1'b1;
                 incPC = 1'b1;
                 fsm_state_next = 'd2;
             end
+            // IF1
             'd2: begin
-                inIR[31:16] = mem_data;
-                inIR[15:0] = {16{1'b0}};
+                // $display("IF1");
+                inIR[DATA_WIDTH*2-1:DATA_WIDTH] = mem_data;
+                inIR[DATA_WIDTH-1:0] = {DATA_WIDTH{1'b0}};
                 ldIR = 1'b1;
-                if (mem_data[15:12] == 4'd0 && mem_data[3:0] == 4'd8) begin
+                if (mem_data[DATA_WIDTH-1:DATA_WIDTH-4] == 4'd0 && mem_data[3:0] == 4'd8) begin
                     inMAR = pc;
                     ldMAR = 1'b1;
                     incPC = 1'b1;
-                    fsm_state_next = 'd3;
+                    fsm_state_next = 'd3; // IF2
                 end
                 else
-                    fsm_state_next = 'd4;
+                    fsm_state_next = 'd4; // ID
             end
+            // IF2
             'd3: begin
-                inIR[15:0] = mem_data;
+                // $display("IF2");
+                inIR[DATA_WIDTH*2-1:DATA_WIDTH] = ir[DATA_WIDTH*2-1:DATA_WIDTH];
+                inIR[DATA_WIDTH-1:0] = mem_data;
                 ldIR = 1'b1;
-                fsm_state_next = 'd4;
+                fsm_state_next = 'd4; // ID
             end
-            // ID            
+            // ID0            
             'd4: begin
+                // $display("ID0");
                 casex(opCode) 
                     // MOV
                     4'b0000:begin
-                        if(ir[19:16] == 4'd0) begin
-                            inA = ir[15:0];
+                        // $display("MOV");
+                        if(ir[DATA_WIDTH+3:DATA_WIDTH] == 4'd8) begin
+                            inA = ir[DATA_WIDTH-1:0];
                             ldA = 1'b1;
+                            currOp_next = 2'd3;
                             fsm_state_next = 'd6; //EXEC
                         end
                         else begin
-                            if(currOp == 1) begin
+                            if(currOp == 0) 
+                                currOp_next = 1;
+                            else if(currOp == 2) begin
                                 inA = mem_data;
                                 ldA = 1'b1;
                                 fsm_state_next = 'd6; //EXEC
-                                currOp = 2'd3;
+                                currOp_next = 2'd3;
                             end
                             else begin
-                                currOp = currOp;
+                                currOp_next = currOp;
                             end
                         end
                     end
                     // IN
                     4'b0111: begin
+                        // $display("IN");
                         inA = in;
                         ldA = 1'b1;
                         fsm_state_next = 'd6; //EXEC
-                        currOp = 2'd3;
+                        currOp_next = 2'd3;
                     end
                     // OUT
                     4'b1000: begin
+                        // $display("OUT");
                         if(currOp == 1) begin
                             inA = mem_data;
                             ldA = 1'b1;
-                            currOp = 2'd3;
+                            currOp_next = 2'd3;
                             fsm_state_next = 'd6; //EXEC
                         end
                         else
-                            currOp = currOp;
+                            currOp_next = currOp;
                     end
                     // ALU
                     4'b00xx, 4'b0100: begin
-                        if(currOp == 1) begin
+                        // $display("ALU");
+                        if(currOp == 0) begin 
+                            currOp_next = 1;
+                        end
+                        else
+                        if(currOp == 2) begin
                             inA = mem_data;
                             ldA = 1'b1;    
                         end
                         else
-                        if(currOp == 2) begin
-                            currOp = 3;
-                            fsm_state_next = 'd6;
+                        if(currOp == 3) begin
+                            currOp_next = 3;
+                            fsm_state_next = 'd6; //EXEC
                         end
                         else 
-                            currOp = currOp;
+                            currOp_next = currOp;
                     end
-                    //STOP
+                    // STOP
                     4'b1111: begin
-                        if(currOp == 'd0) begin
+                        // $display("STOP");
+                        if(currOp_next == 'd0) begin
                             if(opAddr1 != 3'd0)
-                                currOp = currOp;
+                                currOp_next = currOp_next;
                             else
-                                currOp = currOp + 1;
+                                currOp_next = currOp_next + 1;
                         end
                         else 
-                            currOp = currOp;
+                            currOp_next = currOp_next;
 
-                        if(currOp == 'd1) begin
+                        if(currOp_next == 'd1) begin
                             if(opAddr1 != 3'd0) begin
                                 inA = mem_data;
                                 ldA = 1'b1;
@@ -248,202 +279,234 @@ module cpu #(
                                 inA = inA;
 
                             if(opAddr2 != 3'd0)
-                                currOp = currOp;
+                                currOp_next = currOp_next;
                             else
-                                currOp = currOp + 1;
+                                currOp_next = currOp_next + 1;
                         end
                         else 
-                            currOp = currOp;
+                            currOp_next = currOp_next;
                         
-                        if(currOp == 'd2) begin
+                        if(currOp_next == 'd2) begin
                             if(opAddr2 != 3'd0)
                                 ldTMP1 = 1'b1;
                             else
                                 ldTMP1 = 1'b0;
                             
                             if(opAddr3 != 3'd0)
-                                currOp = currOp;
+                                currOp_next = currOp_next;
                             else
-                                currOp = currOp + 1;
+                                currOp_next = currOp_next + 1;
                         end
                         else 
-                            currOp = currOp;
-                        
-                        if(currOp == 'd3) 
-                            currOp = currOp;
-                        else 
-                            currOp = currOp;
+                            currOp_next = currOp_next;
+
+                        if(currOp_next == 'd3) begin
+                            fsm_state_next = 'd6; // EXEC
+                        end
+                        else begin
+                            currOp_next = currOp_next;
+                        end
                     end
                     default: begin
-                        currOp = 2'd3;
+                        currOp_next = 2'd3;
                     end
 
                 endcase
 
 
-                case(currOp) 
+                case(currOp_next) 
                     2'd0: begin 
                         currOpAddr = opAddr1;
-                        currOpMode = ir[27];
+                        currOpMode = ir[DATA_WIDTH+11];
                     end
                     2'd1: begin 
-                        currOpAddr = opAddr1;
-                        currOpMode = ir[23];
+                        currOpAddr = opAddr2;
+                        currOpMode = ir[DATA_WIDTH+7];
                     end
                     2'd2: begin 
-                        currOpAddr = opAddr1;
-                        currOpMode = ir[19];
+                        currOpAddr = opAddr3;
+                        currOpMode = ir[DATA_WIDTH+3];
                     end
                     2'd3: currOpAddr = currOpAddr;
                 endcase
 
-                if(currOp != 3) begin
-                    inMAR = {{3{1'b0}}, currOpAddr};
+                if(currOp_next != 3) begin
+                    inMAR = {{(ADDR_WIDTH-3){1'b0}}, currOpAddr};
                     ldMAR = 1'b1;
                     if(currOpMode) begin
-                        fsm_state_next = 'd5;
+                        fsm_state_next = 'd5; // ID1
                     end
                     else begin
-                        fsm_state_next = 'd4;
+                        fsm_state_next = 'd4; // ID0
                     end
-                    currOp = currOp + 1;
+                    
+                    currOp_next = currOp_next + 1;
                 end
                 else
-                    currOp = 0;
+                    currOp_next = 0;
             end
-            //OF
+            // ID1 (INDIRECT ADDR OPERAND FETCH)
             'd5: begin
-                inMAR = mem_data[5:0];
+                // $display("ID1");
+                inMAR = mem_data[ADDR_WIDTH-1:0];
                 ldMAR = 1'b1;
-                fsm_state_next = 'd4;
+                fsm_state_next = 'd4; // ID
             end
-            // EX
+            // EXEC0
             'd6: begin
-                casex(ir[31:28]) 
+                // $display("EXEC0");
+                casex(opCode) 
                     // MOV
                     4'b0000:begin
-                        if(ir[27] == 1'b0) begin 
+                        // $display("MOV");
+                        if(ir[DATA_WIDTH+11] == 1'b0) begin 
                             inMDR = acc;
                             ldMDR = 1'b1;
-                            inMAR = {{3{1'b0}}, ir[26:24]};
+                            inMAR = {{(ADDR_WIDTH-3){1'b0}}, ir[DATA_WIDTH+10:DATA_WIDTH+8]};
                             ldMAR = 1'b1;
-                            fsm_state_next = 'd1;
+                            fsm_state_next = 'd11; // EXEC2
                         end
                         else begin
-                            inMAR = {{3{1'b0}}, ir[26:24]};
+                            inMAR = {{(ADDR_WIDTH-3){1'b0}}, ir[DATA_WIDTH+10:DATA_WIDTH+8]};
                             ldMAR = 1'b1;
-                            fsm_state_next = 'd7;
+                            fsm_state_next = 'd7; // EXEC1
                         end
                     end
                     // IN
                     4'b0111: begin
-                        if(ir[27] == 1'b0) begin 
+                        // $display("IN");
+                        if(ir[DATA_WIDTH+11] == 1'b0) begin 
                             inMDR = acc;
                             ldMDR = 1'b1;
-                            inMAR = {{3{1'b0}}, ir[26:24]};
+                            inMAR = {{(ADDR_WIDTH-3){1'b0}}, ir[DATA_WIDTH+10:DATA_WIDTH+8]};
                             ldMAR = 1'b1;
-                            fsm_state_next = 'd1;
+                            fsm_state_next = 'd11; // EXEC2
                         end
                         else begin
-                            inMAR = {{3{1'b0}}, ir[26:24]};
+                            inMAR = {{(ADDR_WIDTH-3){1'b0}}, ir[DATA_WIDTH+10:DATA_WIDTH+8]};
                             ldMAR = 1'b1;
-                            fsm_state_next = 'd7;
+                            fsm_state_next = 'd7; // EXEC1
                         end
                     end
                     // OUT
                     4'b1000: begin
-                        out = acc;
-                        fsm_state_next = 'd1;
+                        // $display("OUT");
+                        out_next = acc;
+                        fsm_state_next = 'd1; // IF
                     end
                     // ALU
                     4'b00xx, 4'b0100: begin
-                        if(ir[27] == 1'b0) begin 
+                        // $display("ALU");
+                        if(ir[DATA_WIDTH+11] == 1'b0) begin 
                             inA = alu_out;
                             ldA = 1'b1;
                             inMDR = alu_out;
                             ldMDR = 1'b1;
-                            inMAR = {{3{1'b0}}, ir[26:24]};
+                            inMAR = {{(ADDR_WIDTH-3){1'b0}}, ir[DATA_WIDTH+10:DATA_WIDTH+8]};
                             ldMAR = 1'b1;
-                            fsm_state_next = 'd1;
+                            fsm_state_next = 'd11; // EXEC2
                         end
                         else begin
                             inA = alu_out;
                             ldA = 1'b1;
-                            inMAR = {{3{1'b0}}, ir[26:24]};
+                            inMAR = {{(ADDR_WIDTH-3){1'b0}}, ir[DATA_WIDTH+10:DATA_WIDTH+8]};
                             ldMAR = 1'b1;
-                            fsm_state_next = 'd7;
+                            fsm_state_next = 'd7; // EXEC1
                         end
                     end
-                    //STOP
+                    // STOP0
                     4'b1111: begin
+                        // $display("STOP0");
                         if(opAddr1 != 3'd0) begin
-                            out = acc;
-                            fsm_state_next = 'd8;
+                            out_next = acc;
+                            fsm_state_next = 'd8; // STOP1
                         end
                         else if(opAddr2 != 3'd0) begin
-                            out = tmp1;
-                            fsm_state_next = 'd9;
+                            out_next = tmp1;
+                            fsm_state_next = 'd9; // STOP2
                         end
                         else if(opAddr3 != 3'd0) begin
-                            out = mem_data;
-                            fsm_state_next = 'd10;
+                            out_next = mem_data;
+                            fsm_state_next = 'd10; // SPIN
                         end
                         else begin
-                            fsm_state_next = 'd10;
+                            fsm_state_next = 'd10; // SPIN
                         end
                     end
                     default: begin
-                        fsm_state_next = 'd0;
+                        fsm_state_next = 'd0; // RESET
                     end
 
                 endcase
             end
+            // STOP1
             'd8: begin
+                // $display("STOP1");
                 if(opAddr2 != 3'd0) begin
-                    out = tmp1;
-                    fsm_state_next = 'd9;
+                    out_next = tmp1;
+                    fsm_state_next = 'd9; // STOP2
                 end
                 else if(opAddr3 != 3'd0) begin
-                    out = mem_data;
-                    fsm_state_next = 'd10;
+                    out_next = mem_data;
+                    fsm_state_next = 'd10; // SPIN
                 end
                 else begin
-                    fsm_state_next = 'd10;
+                    fsm_state_next = 'd10; // SPIN
                 end
             end
+            // STOP2
             'd9: begin
+                // $display("STOP2");
                 if(opAddr3 != 3'd0) begin
-                    out = mem_data;
-                    fsm_state_next = 'd10;
+                    out_next = mem_data;
+                    fsm_state_next = 'd10; // SPIN
                 end
                 else begin
-                    fsm_state_next = 'd10;
+                    fsm_state_next = 'd10; // SPIN
                 end
             end
+            // EXEC1 (DEST ADDR FETCH)
             'd7: begin
+                // $display("EXEC1");
                 inMDR = acc;
                 ldMDR = 1'b1;
-                inMAR = mem_data[5:0];
+                inMAR = mem_data[ADDR_WIDTH-1:0];
                 ldMAR = 1'b1;
-                fsm_state_next = 'd1;
+                fsm_state_next = 'd11; // WRITE MEM
             end
             // SPIN
             'd10: begin
-                fsm_state_next = 'd10;
+                // $display("SPIN");
+                fsm_state_next = 'd10; // SPIN
+            end
+            // EXEC2 (WRITE MEM)
+            'd11: begin
+                // $display("EXEC2");
+                mem_we = 1'b1;
+                fsm_state_next = 'd1;
+            end
+            default: begin
+                // $display("default");
+                fsm_state_next = 'd0;
             end
         endcase
     end
 
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
+        // // $display("CLK");
         if(!rst_n) begin
+            // $display("RST");
+            inPC <= 8;
+            inSP <= 0;
             fsm_state <= 0;
             currOp <= 0;
             out <= 0;
-            mem_we <= 0;
-
         end
         else begin
             fsm_state <= fsm_state_next;
+            // $display("fsm_state_next: %d", fsm_state_next);
+            out <= out_next;
+            currOp <= currOp_next;
         end
     end
 

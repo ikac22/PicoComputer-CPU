@@ -2,5 +2,6 @@ tooling/*
 !tooling/config
 !tooling/makefile
 !tooling/mem_init.mif
+!tooling/mem_init.hex
 VLSI_PREDAJA/*
 projekat.zip

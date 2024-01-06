@@ -13,20 +13,26 @@ module memory #(
 
     integer i;
 
-	(* ram_init_file = FILE_NAME *) reg [DATA_WIDTH - 1:0] mem [2**ADDR_WIDTH - 1:0];
+    (* ram_init_file = FILE_NAME *) reg [DATA_WIDTH - 1:0] mem [2**ADDR_WIDTH - 1:0];
+
+    // initial begin
+    //     $readmemh(FILE_NAME, mem);
+    // end
 
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) begin
             for(i = 0; i < 8; i = i + 1)
-                mem[i] <= 16'd0;
+                mem[i] <= {DATA_WIDTH{1'd0}};
         end
         else begin
-            if (we) 
+            if(we) 
                 mem[addr] <= data;
             else 
-                mem[addr] <= mem[addr]; 
+                mem[addr] <= mem[addr];
         end
     end
+
+    
 
     assign out = mem[addr];
 

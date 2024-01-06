@@ -1,4 +1,4 @@
-module moduleName #(
+module clk_div #(
     parameter DIVISOR = 50_000_000
 ) (
     input clk,

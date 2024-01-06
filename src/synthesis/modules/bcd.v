@@ -4,12 +4,13 @@ module bcd (
     output reg [3:0] tens
 );
 
+
     reg [5:0] bin;
     integer i; 
 
     // DOUBLE DABBLE
     always @(in) begin
-        {tens, ones, bin} = {4'h0, 4'h0, 6'h00};
+        {tens, ones, bin} = {4'h0, 4'h0, in};
     
         for(i = 0; i < 6; i = i + 1) begin
             // Every shift will be checked except last

@@ -3,7 +3,12 @@
 # cd tooling
 # ./xpack/bin/make
 PLATFORM_WINDOWS=1
+SYNTH_SIMUL=0
+ifeq ($(SYNTH_SIMUL), 0)
 SIMUL_TOP_LEVEL_MODULE = top
+else
+SIMUL_TOP_LEVEL_MODULE = testbench
+endif
 SIMUL_LIB = work
 # 1 (yes) -> override timescale
 # 0 (no)  -> do NOT override timescale
@@ -57,7 +62,11 @@ SYNTH_TOOL_EXE_DIR_PATH = /home/ikac/shared/QuartusWeb/quartus/linux64/
 endif
 
 LIST_FILE_ICARUS = ./config/list-icarus-verilog.lst
+ifeq ($(SYNTH_SIMUL), 0)
 LIST_FILE_SIMUL = ./config/list-src-files-simul.lst
+else
+LIST_FILE_SIMUL = ./config/list-src-files-simul-mine.lst
+endif
 LIST_FILE_SYNTH = ./config/list-src-files-synth.lst
 
 all: help
