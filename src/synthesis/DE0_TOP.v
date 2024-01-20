@@ -210,19 +210,27 @@ module DE0_TOP
 	//  Structural coding
 	//=======================================================
 
-
 	top #(
 		.DIVISOR(50_000_000),
-		.FILE_NAME("mem_init.mif"),
+`ifdef SIMUL
+      .FILE_NAME("mem_init.hex"),
+`else
+      .FILE_NAME("mem_init.mif"),
+`endif
 		.ADDR_WIDTH(6),
 		.DATA_WIDTH(16)
 	) top_inst (
 		.clk(CLOCK_50),
+`ifdef PHASE_3
+		.kbd({PS2_KBDAT, PS2_KBCLK}),
+`endif
 		.btn(~BUTTON[2:0]),
 		.rst_n(SW[9]),
 		.sw(SW[8:0]),
+`ifdef PHASE_3
+		.mnt({VGA_HS, VGA_VS, VGA_R, VGA_G, VGA_B}),
+`endif
 		.led(LEDG[9:0]),
 		.hex({HEX3_D, HEX2_D, HEX1_D, HEX0_D})
 	);
-
 endmodule

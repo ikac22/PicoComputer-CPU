@@ -4,6 +4,9 @@
 # ./xpack/bin/make
 PLATFORM_WINDOWS=1
 SYNTH_SIMUL=0
+PHASE_3=0
+HW_C3=1
+VGA_NEXT=0
 ifeq ($(SYNTH_SIMUL), 0)
 SIMUL_TOP_LEVEL_MODULE = top
 else
@@ -38,7 +41,18 @@ endif
 
 # DE0_TOP (CycloneIII)
 # DE0_CV_TOP (CycloneV)
+
+
+ifeq ($(HW_C3), 1) # CYCLONE III board
+
 SYNTH_TOP_LEVEL_MODULE = DE0_TOP
+	
+else # CYCLONE V board
+
+SYNTH_TOP_LEVEL_MODULE = DE0_CV_TOP
+	
+endif
+
 # CycloneIII
 # CycloneV
 SYNTH_DEVICE_FAMILY = CycloneIII
@@ -168,6 +182,15 @@ SIMUL_VLOG_ARGS += -l $(SIMUL_VLOG_LOG_FILE)
 ifeq ($(SIMUL_IS_TIMESCALE_OVERRIDEN), 1)
 SIMUL_VLOG_ARGS += -override_timescale $(SIMUL_TIMESCALE)
 endif
+ifeq ($(SYNTH_SIMUL), 1)
+SIMUL_VLOG_ARGS += +define+SIMUL
+endif
+ifeq ($(PHASE_3), 1)
+SIMUL_VLOG_ARGS += +define+PHASE_3
+endif
+ifeq ($(VGA_NEXT), 1)
+SIMUL_VLOG_ARGS += +define+VGA_NEXT
+endif
 
 # vopt (optimizer) command line option arguments
 SIMUL_VOPT_ARGS =
@@ -282,6 +305,12 @@ SYNTH_ASSIGNMENT_FILES = $(SYNTH_PROJECT).qpf $(SYNTH_PROJECT).qsf
 # quartus_map (mapping i.e. analysis & synthesis) command line arguments
 SYNTH_MAP_ARGS =
 SYNTH_MAP_ARGS += --family=$(SYNTH_DEVICE_FAMILY)
+ifeq ($(PHASE_3), 1)
+SYNTH_MAP_ARGS += --verilog_macro="PHASE_3"
+endif
+ifeq ($(VGA_NEXT), 1)
+SIMUL_VLOG_ARGS += --verilog_macro="VGA_NEXT"
+endif
 SYNTH_MAP_ARGS += $(addprefix --source=,$(SYNTH_SRC_FILE_LIST))
 
 # quartus_fit (fitting i.e. place & route) command line arguments

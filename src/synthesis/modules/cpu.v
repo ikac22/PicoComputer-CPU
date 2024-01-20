@@ -7,6 +7,11 @@ module cpu #(
     input  [DATA_WIDTH-1:0] mem_in,
 
     input  [DATA_WIDTH-1:0] in,
+    input                   control,
+
+`ifdef PHASE_3
+    output reg               signal,
+`endif
 
     output reg              mem_we,
     output [ADDR_WIDTH-1:0] mem_addr,
@@ -68,7 +73,7 @@ module cpu #(
         .rst_n(rst_n),
         .ld(ldMDR),
         .in(inMDR),
-        .out(mem_in)
+        .out(mem_data)
     );
 
     wire [DATA_WIDTH-1:0] tmp1;
@@ -76,7 +81,7 @@ module cpu #(
     register #(.DATA_WIDTH(DATA_WIDTH)) u_tmp1(
         .clk(clk),
         .rst_n(rst_n),
-        .in(mem_data),
+        .in(mem_in),
         .ld(ldTMP1),
         .out(tmp1)
     );
@@ -107,7 +112,7 @@ module cpu #(
     alu #(.DATA_WIDTH(DATA_WIDTH)) u_alu(
         .oc(ir[30:28] - 3'd1),
         .a(acc),
-        .b(mem_data),
+        .b(mem_in),
         .f(alu_out)
     );
 
@@ -116,6 +121,9 @@ module cpu #(
     reg [3:0]             fsm_state_next;
     reg [DATA_WIDTH-1:0]  out_next;
     reg [1:0]             currOp_next;
+`ifdef PHASE_3
+    reg                   signal_next;
+`endif
 
     wire [3:0] opCode;
     wire [2:0] opAddr1, opAddr2, opAddr3;
@@ -151,7 +159,9 @@ module cpu #(
         
         out_next = out;
         fsm_state_next = fsm_state;
-
+`ifdef PHASE_3
+        signal_next = signal;
+`endif
         case(fsm_state)
             // RESET
             'd0: begin
@@ -170,10 +180,10 @@ module cpu #(
             // IF1
             'd2: begin
                 // $display("IF1");
-                inIR[DATA_WIDTH*2-1:DATA_WIDTH] = mem_data;
+                inIR[DATA_WIDTH*2-1:DATA_WIDTH] = mem_in;
                 inIR[DATA_WIDTH-1:0] = {DATA_WIDTH{1'b0}};
                 ldIR = 1'b1;
-                if (mem_data[DATA_WIDTH-1:DATA_WIDTH-4] == 4'd0 && mem_data[3:0] == 4'd8) begin
+                if (mem_in[DATA_WIDTH-1:DATA_WIDTH-4] == 4'd0 && mem_in[3:0] == 4'd8) begin
                     inMAR = pc;
                     ldMAR = 1'b1;
                     incPC = 1'b1;
@@ -186,7 +196,7 @@ module cpu #(
             'd3: begin
                 // $display("IF2");
                 inIR[DATA_WIDTH*2-1:DATA_WIDTH] = ir[DATA_WIDTH*2-1:DATA_WIDTH];
-                inIR[DATA_WIDTH-1:0] = mem_data;
+                inIR[DATA_WIDTH-1:0] = mem_in;
                 ldIR = 1'b1;
                 fsm_state_next = 'd4; // ID
             end
@@ -207,7 +217,7 @@ module cpu #(
                             if(currOp == 0) 
                                 currOp_next = 1;
                             else if(currOp == 2) begin
-                                inA = mem_data;
+                                inA = mem_in;
                                 ldA = 1'b1;
                                 fsm_state_next = 'd6; //EXEC
                                 currOp_next = 2'd3;
@@ -220,16 +230,37 @@ module cpu #(
                     // IN
                     4'b0111: begin
                         // $display("IN");
-                        inA = in;
-                        ldA = 1'b1;
-                        fsm_state_next = 'd6; //EXEC
                         currOp_next = 2'd3;
+                    `ifdef PHASE_3
+                        if(signal) begin
+                    `endif
+                            if(control) begin
+                                inA = in;
+                                ldA = 1'b1;
+                                fsm_state_next = 'd6;
+                            `ifdef PHASE_3
+                                signal_next = 1'b0;
+                            `endif
+                            end
+                            else begin
+                            `ifdef PHASE_3
+                                signal_next = 1'b1;
+                            `endif
+                                fsm_state_next = 'd4;
+                            end
+                    `ifdef PHASE_3
+                        end
+                        else begin
+                            signal_next = 1'b1;
+                            fsm_state_next = 'd4;
+                        end
+                    `endif
                     end
                     // OUT
                     4'b1000: begin
                         // $display("OUT");
                         if(currOp == 1) begin
-                            inA = mem_data;
+                            inA = mem_in;
                             ldA = 1'b1;
                             currOp_next = 2'd3;
                             fsm_state_next = 'd6; //EXEC
@@ -238,14 +269,15 @@ module cpu #(
                             currOp_next = currOp;
                     end
                     // ALU
-                    4'b00xx, 4'b0100: begin
+                    4'b0001, 4'b0100, 4'b0010, 4'b0011: 
+                    begin
                         // $display("ALU");
                         if(currOp == 0) begin 
                             currOp_next = 1;
                         end
                         else
                         if(currOp == 2) begin
-                            inA = mem_data;
+                            inA = mem_in;
                             ldA = 1'b1;    
                         end
                         else
@@ -270,7 +302,7 @@ module cpu #(
 
                         if(currOp_next == 'd1) begin
                             if(opAddr1 != 3'd0) begin
-                                inA = mem_data;
+                                inA = mem_in;
                                 ldA = 1'b1;
                             end
                             else
@@ -346,7 +378,7 @@ module cpu #(
             // ID1 (INDIRECT ADDR OPERAND FETCH)
             'd5: begin
                 // $display("ID1");
-                inMAR = mem_data[ADDR_WIDTH-1:0];
+                inMAR = mem_in[ADDR_WIDTH-1:0];
                 ldMAR = 1'b1;
                 fsm_state_next = 'd4; // ID
             end
@@ -393,7 +425,8 @@ module cpu #(
                         fsm_state_next = 'd1; // IF
                     end
                     // ALU
-                    4'b00xx, 4'b0100: begin
+                    4'b0001, 4'b0010, 4'b0011, 4'b0100: 
+                    begin
                         // $display("ALU");
                         if(ir[DATA_WIDTH+11] == 1'b0) begin 
                             inA = alu_out;
@@ -424,7 +457,7 @@ module cpu #(
                             fsm_state_next = 'd9; // STOP2
                         end
                         else if(opAddr3 != 3'd0) begin
-                            out_next = mem_data;
+                            out_next = mem_in;
                             fsm_state_next = 'd10; // SPIN
                         end
                         else begin
@@ -445,7 +478,7 @@ module cpu #(
                     fsm_state_next = 'd9; // STOP2
                 end
                 else if(opAddr3 != 3'd0) begin
-                    out_next = mem_data;
+                    out_next = mem_in;
                     fsm_state_next = 'd10; // SPIN
                 end
                 else begin
@@ -456,7 +489,7 @@ module cpu #(
             'd9: begin
                 // $display("STOP2");
                 if(opAddr3 != 3'd0) begin
-                    out_next = mem_data;
+                    out_next = mem_in;
                     fsm_state_next = 'd10; // SPIN
                 end
                 else begin
@@ -468,7 +501,7 @@ module cpu #(
                 // $display("EXEC1");
                 inMDR = acc;
                 ldMDR = 1'b1;
-                inMAR = mem_data[ADDR_WIDTH-1:0];
+                inMAR = mem_in[ADDR_WIDTH-1:0];
                 ldMAR = 1'b1;
                 fsm_state_next = 'd11; // WRITE MEM
             end
@@ -497,8 +530,14 @@ module cpu #(
             fsm_state <= 0;
             currOp <= 0;
             out <= 0;
+        `ifdef PHASE_3
+            signal <= 1'b0;
+        `endif
         end
         else begin
+        `ifdef PHASE_3
+            signal <= signal_next;
+        `endif
             fsm_state <= fsm_state_next;
             // $display("fsm_state_next: %d", fsm_state_next);
             out <= out_next;

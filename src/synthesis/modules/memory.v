@@ -10,14 +10,16 @@ module memory #(
     input  [DATA_WIDTH - 1:0] data,
     output [DATA_WIDTH - 1:0] out
 );
+    `ifndef SIMUL
+        (* ram_init_file = FILE_NAME *) reg [DATA_WIDTH - 1:0] mem [2**ADDR_WIDTH - 1:0];     
+    `else
+        reg [DATA_WIDTH - 1:0] mem [2**ADDR_WIDTH - 1:0];
+        initial begin
+            $readmemh(FILE_NAME, mem);
+        end        
+    `endif 
 
     integer i;
-
-    (* ram_init_file = FILE_NAME *) reg [DATA_WIDTH - 1:0] mem [2**ADDR_WIDTH - 1:0];
-
-    // initial begin
-    //     $readmemh(FILE_NAME, mem);
-    // end
 
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) begin
@@ -31,7 +33,6 @@ module memory #(
                 mem[addr] <= mem[addr];
         end
     end
-
     
 
     assign out = mem[addr];

@@ -2,6 +2,10 @@ src/synthesis/modules/ssd.v
 src/synthesis/modules/bcd.v
 src/synthesis/modules/debouncer.v
 src/synthesis/modules/red.v
+src/synthesis/modules/ps2.v
+src/synthesis/modules/scan_codes.v
+src/synthesis/modules/vga.v
+src/synthesis/modules/color_codes.v
 
 src/synthesis/modules/clk_div.v
 

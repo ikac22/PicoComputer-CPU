@@ -84,15 +84,44 @@ module DE0_CV_TOP(input CLOCK2_50,
     
     top #(
       .DIVISOR(50_000_000),
+`ifdef SIMUL
+      .FILE_NAME("mem_init.hex"),
+`else
       .FILE_NAME("mem_init.mif"),
+`endif
       .ADDR_WIDTH(6),
       .DATA_WIDTH(16)
     ) top_inst (
       .clk(CLOCK_50),
+`ifdef PHASE_3
+       .kbd({PS2_DAT, PS2_CLK}),
+`endif
       .btn(~KEY[2:0]),
-      .sw(SW[9:0]),
+      .rst_n(SW[9]),
+      .sw(SW[8:0]),
+`ifdef PHASE_3
+      .mnt({VGA_HS, VGA_VS, VGA_R, VGA_G, VGA_B}),
+`endif
       .led(LEDR[9:0]),
       .hex({HEX5, HEX4, HEX1, HEX0})
     );
+    // wire real_clk;
+
+    // clk_div #(.DIVISOR(2)) u_div(
+    //   .clk(clk),
+    //   .rst_n(SW[9]),
+    //   .out(real_clk)
+    // );
+
+    // vga u_vga(
+    //   .clk(real_clk),
+    //   .rst_n(SW[9]),
+    //   .code(24'h001002),
+    //   .hsync(VGA_HS),
+    //   .vsync(VGA_VS),
+    //   .red(VGA_R),
+    //   .green(VGA_G),
+    //   .blue(VGA_B)
+    // );
 
 endmodule

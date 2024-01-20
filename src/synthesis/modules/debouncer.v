@@ -9,6 +9,8 @@ module debouncer (
     reg [1:0] ff_next, ff_reg;
     reg [7:0] cnt_next, cnt_reg;
 
+    wire in_changed, in_stable;
+
     assign out = out_reg;
     assign in_changed = ff_reg[0] ^ ff_reg[1];
     assign in_stable = (cnt_reg == 8'hFF) ? 1'b1 : 1'b0;

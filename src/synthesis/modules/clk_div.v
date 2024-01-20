@@ -24,13 +24,15 @@ module clk_div #(
     end
 
     always @(*) begin
-        out_next = out_reg;
-        cnt_next = cnt_reg;
+        if(DIVISOR > 1) 
+            out_next = (cnt_reg < DIVISOR/2) ? 1'b1:1'b0;
+        else 
+            out_next = ~out_reg;
+        
         if (cnt_reg == DIVISOR-1) 
             cnt_next = 0;
         else 
             cnt_next = cnt_reg + 1;
-        out_next = (cnt_reg < DIVISOR/2) ? 1'b1:1'b0;
     end
 
 endmodule
