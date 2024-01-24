@@ -84,6 +84,7 @@ More about them you can find in docs `Postavka.pdf`(serbian).
 *TODO*
 3. **Verification**
 *TODO*
+
 **Disclamer for linux users**: Full synthesis on linux wont work correctly.
     - In some cases when fitting and routing begin it will never end. The fitter will just be stuck on this line:
     [[docs/fitter_error/fitter_error.png]]
