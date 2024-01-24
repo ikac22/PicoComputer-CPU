@@ -11,6 +11,7 @@ TEST=0
 HEXTEST_1=0
 HEXTEST_2=0
 MODIF=0
+VERIF=1
 ifeq ($(SYNTH_SIMUL), 0)
 SIMUL_TOP_LEVEL_MODULE = top
 else
@@ -18,6 +19,9 @@ SIMUL_TOP_LEVEL_MODULE = testbench
 endif
 ifeq ($(MODIF), 1)
 SIMUL_TOP_LEVEL_MODULE = tb
+endif
+ifeq ($(VERIF), 1)
+SIMUL_TOP_LEVEL_MODULE = testbench_uvm
 endif
 SIMUL_LIB = work
 # 1 (yes) -> override timescale

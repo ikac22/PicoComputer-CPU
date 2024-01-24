@@ -53,6 +53,10 @@ More about them you can find in docs `Postavka.pdf`(serbian).
 
 *TODO*
 
+# Prerequisites
+
+*TODO*
+
 # Makefile use
 
 **Variable override**:
@@ -84,13 +88,22 @@ More about them you can find in docs `Postavka.pdf`(serbian).
     - **else** - use outputs on the board for project specified outputs
 - HEXTEST_1 
 - HEXTEST_2
+
+- **VERIF**
+    - **1** - if in simulations is done verification of register module 
+    - **else** - normal simulation is done
     
 
 ## **Simulation**
+
 *TODO*
+
 ## **Synthesis**
+
 *TODO*
+
 ## **Verification**
+
 *TODO*
 
 **Disclamer for linux users**: Full synthesis on linux wont work correctly.
