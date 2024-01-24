@@ -3,7 +3,7 @@ module bcd (
     output reg [3:0]  ones,
     output reg [3:0] tens
 );
-
+    // get two digits(ones and tens) of a decimal represented by binary number(in)
 
     reg [5:0] bin;
     integer i; 

@@ -7,10 +7,17 @@ SYNTH_SIMUL=0
 PHASE_3=0
 HW_C3=1
 VGA_NEXT=0
+TEST=0
+HEXTEST_1=0
+HEXTEST_2=0
+MODIF=0
 ifeq ($(SYNTH_SIMUL), 0)
 SIMUL_TOP_LEVEL_MODULE = top
 else
 SIMUL_TOP_LEVEL_MODULE = testbench
+endif
+ifeq ($(MODIF), 1)
+SIMUL_TOP_LEVEL_MODULE = tb
 endif
 SIMUL_LIB = work
 # 1 (yes) -> override timescale
@@ -31,7 +38,9 @@ SIMUL_IS_QUESTA_USED = 0
  
 ifeq ($(PLATFORM_WINDOWS), 1)
 
-SIMUL_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\
+# SIMUL_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\
+
+SIMUL_TOOL_EXE_DIR_PATH = C:\\altera\\13.0sp1\\modelsim_ase\\win32aloem\\
 
 else
 
@@ -67,7 +76,8 @@ SYNTH_CYCLONE5_CONSTRAINTS_FILE = ./config/boards/cyclone5/DE0_CV_TOP.sdc
 
 ifeq ($(PLATFORM_WINDOWS), 1)
 
-SYNTH_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\quartus\\bin\\
+SYNTH_TOOL_EXE_DIR_PATH = C:\\altera\\13.0sp1\\quartus\\bin\\
+
 
 else
 
@@ -161,10 +171,10 @@ SIMUL_TOOL_VSIM = $(SIMUL_TOOL_EXE_DIR_PATH)vsim
 
 ifeq ($(PLATFORM_WINDOWS), 1)
 
-SIMUL_TOOL_VLIB = $(SIMUL_TOOL_VLIB).exe
-SIMUL_TOOL_VLOG = $(SIMUL_TOOL_VLOG).exe
-SIMUL_TOOL_VOPT = $(SIMUL_TOOL_VOPT).exe
-SIMUL_TOOL_VSIM = $(SIMUL_TOOL_VSIM).exe
+SIMUL_TOOL_VLIB = $(SIMUL_TOOL_EXE_DIR_PATH)vlib.exe
+SIMUL_TOOL_VLOG = $(SIMUL_TOOL_EXE_DIR_PATH)vlog.exe
+SIMUL_TOOL_VOPT = $(SIMUL_TOOL_EXE_DIR_PATH)vopt.exe
+SIMUL_TOOL_VSIM = $(SIMUL_TOOL_EXE_DIR_PATH)vsim.exe
 
 endif
 
@@ -190,6 +200,9 @@ SIMUL_VLOG_ARGS += +define+PHASE_3
 endif
 ifeq ($(VGA_NEXT), 1)
 SIMUL_VLOG_ARGS += +define+VGA_NEXT
+endif
+ifeq ($(TEST),1)
+SIMUL_VLOG_ARGS += +define+TEST
 endif
 
 # vopt (optimizer) command line option arguments
@@ -309,8 +322,22 @@ ifeq ($(PHASE_3), 1)
 SYNTH_MAP_ARGS += --verilog_macro="PHASE_3"
 endif
 ifeq ($(VGA_NEXT), 1)
-SIMUL_VLOG_ARGS += --verilog_macro="VGA_NEXT"
+SYNTH_MAP_ARGS += --verilog_macro="VGA_NEXT"
 endif
+ifeq ($(TEST),1)
+SYNTH_MAP_ARGS += --verilog_macro="TEST"
+endif
+ifeq ($(HEXTEST_1),1)
+SYNTH_MAP_ARGS += --verilog_macro="HEXTEST_1"
+endif
+ifeq ($(HEXTEST_2),1)
+SYNTH_MAP_ARGS += --verilog_macro="HEXTEST_2"
+endif
+ifeq ($(MODIF),1)
+SYNTH_MAP_ARGS += --verilog_macro="MODIF"
+endif
+
+
 SYNTH_MAP_ARGS += $(addprefix --source=,$(SYNTH_SRC_FILE_LIST))
 
 # quartus_fit (fitting i.e. place & route) command line arguments

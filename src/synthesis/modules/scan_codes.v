@@ -8,7 +8,7 @@ module scan_codes (
 
 );
 
-reg [15:0] in_code, in_code_next;
+reg [15:0] in_code, in_code_next; // last read code
 reg control_next;
 reg [3:0] num_next;
 reg new_code;
@@ -19,19 +19,22 @@ always @(*) begin
     num_next = num;
     new_code = 1'b0;
     if(signal) begin
-        case(code)
+        // if signal is present than start catching codes
+        case(code) // if code is break code of hex digit and is different from last code
         //  1       2       3       4       5       6       7       8       9       0
             'hF016, 'hF01E, 'hF026, 'hF025, 'hF02E, 'hF036, 'hF03D, 'hF03E, 'hF046, 'hF045,
         //  A       B       C       D       E       F
-            'hF01C, 'hF032, 'hF021, 'hF023, 'hF024, 'hF02B: new_code = code != in_code;
+            'hF01C, 'hF032, 'hF021, 'hF023, 'hF024, 'hF02B: new_code = code != in_code; // not good probably but works
             default: new_code = 0;
         endcase
 
         if(control) begin
+            // if control is 1 and signal is 1 keep it up
             control_next = control;
             num_next = num;
         end
         else begin
+            // if control is not 1 then if there is new_code
             if(new_code) begin
                 control_next = 1'b1;
                 case(code)

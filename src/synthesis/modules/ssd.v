@@ -2,7 +2,7 @@ module ssd (
     input [3:0] in, 
     output reg [6:0] out
 );
-
+    // seven segment display input(out) for one hex digit(in)
     always @(*)
         case (in)
             4'b0000: out = ~7'h3F;

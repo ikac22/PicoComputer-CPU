@@ -6,57 +6,33 @@ module ps2 (
     output reg [15:0]  code 
 );
 
-reg tmp_cl;
-reg [15:0] code_next;
-wire n_ps2_clk_re;
-wire [21:0] two_b_reg;
-wire tmp_cnt;
+reg [9:0] sh_reg; // shifter 
+reg [3:0] cnt_reg; // counter
+reg [7:0] tmp; // for testing
 
-red ps2_clk_red(
-    .clk(clk),
-    .rst_n(rst_n),
-    .in(!ps2_clk),
-    .out(n_ps2_clk_re)
-);
+// this could lead to the Clock Domain Crossing(CDC) if cpu clk is faster
+// but because cpu clk is 1HZ it is unlikely to happen
 
-register #(.DATA_WIDTH(22)) sh_reg(
-    .clk(clk), 
-    .rst_n(rst_n),
-    .sl(n_ps2_clk_re),
-    .il(ps2_data),
-    .out(two_b_reg)
-);
-
-register #(.DATA_WIDTH(4)) cnt_reg(
-    .clk(clk),
-    .cl(tmp_cl),
-    .rst_n(rst_n),
-    .inc(n_ps2_clk_re),
-    .out(tmp_cnt)
-);
-
-wire [1:0]  start  = {two_b_reg[11], two_b_reg[0]};
-wire [1:0]  parity = {two_b_reg[20], two_b_reg[9]};
-wire [1:0]  stop   = {two_b_reg[21], two_b_reg[10]};
-wire        new_read = tmp_cnt == 'd11;
-
-always @(*) begin
-    if(new_read) begin
-        code_next = {two_b_reg[19:12], two_b_reg[8:1]};
-        tmp_cl = 1;
+// TO FIX THIS code reg must be updated on posedge "clk" and not "ps2_clk" negedge 
+// or it could stay this way and implement good synchronization in "scan_codes" module
+always @(negedge ps2_clk, negedge rst_n) begin
+    if(!rst_n)begin
+        code <= 0;
+        sh_reg <= 0;
+        cnt_reg <= 0;
+        tmp <= 0;
     end
-    else begin
-        code_next = code;
-        tmp_cl = 0;
-    end
-end
-
-always @(posedge clk, negedge rst_n) begin
-    if(!rst_n) begin
-        code <= 16'h0000;
-    end
-    else begin
-        code <= code_next;
+    else
+    begin
+        if(cnt_reg == 4'b1010) begin
+            cnt_reg <= 0;
+            code <= {code[7:0], sh_reg[8:1]};
+            sh_reg <= 0;
+        end
+        else begin
+            cnt_reg <= cnt_reg + 1;
+            sh_reg <= {ps2_data, sh_reg[9:1]};
+        end
     end
 end
 

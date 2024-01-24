@@ -9,6 +9,9 @@ reg  [11:0] code_tens;
 
 assign code = {code_tens, code_ones};
 
+// 2 digit number to 2 colors
+// each digit has a own color
+
 bcd num_bcd(
     .in(num),
     .ones(ones),

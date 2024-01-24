@@ -19,12 +19,18 @@ module memory #(
         end        
     `endif 
 
-    integer i;
+    // integer i;
 
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) begin
-            for(i = 0; i < 8; i = i + 1)
-                mem[i] <= {DATA_WIDTH{1'd0}};
+            // mem[0] <= 0;
+            // mem[1] <= 0;
+            // mem[2] <= 0;
+            // mem[3] <= 0;
+            // mem[4] <= 0;
+            // mem[5] <= 0;
+            // mem[6] <= 0;
+            // mem[7] <= 0;
         end
         else begin
             if(we) 

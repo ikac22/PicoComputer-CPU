@@ -23,30 +23,18 @@ module vga (
     input               clk,
     input               rst_n,
     input      [23:0]   code,
-`ifndef VGA_NEXT
     output              hsync,
     output              vsync,
     output     [3:0]    red,
     output     [3:0]    green,
     output     [3:0]    blue
-`else
-    output reg             hsync,
-    output reg             vsync,
-    output reg    [3:0]    red,
-    output reg    [3:0]    green,
-    output reg    [3:0]    blue
-`endif
 );
 
 reg [10:0] h_counter;
 reg [9:0]  v_counter;
 reg [23:0] tmp_code;
 
-`ifdef VGA_NEXT
-    reg [3:0]  red_next, green_next, blue_next;
-    reg        vsync_next, hsync_next;
-`endif
-
+// counters state crossing points
 localparam  V_VISIBLE_START  = 0, 
             V_VISIBLE_END    = 600,
             V_FP_END        = 637,
@@ -61,78 +49,46 @@ localparam  H_VISIBLE_START  = 0,
             H_BP_END        = 1040;
 
 
-// Da li se koristi NEXT logika ili assign?
-`ifndef VGA_NEXT  
-    assign vsync = v_counter < V_FP_END || 
-                   v_counter >= V_PULSE_END;
+// vsync is down only during sync pulse
+assign vsync = v_counter < V_FP_END || 
+                v_counter >= V_PULSE_END; 
 
-    assign hsync = h_counter < H_FP_END || 
-                   h_counter >= H_PULSE_END;
+// hsync is down only during sync pulse
+assign hsync = h_counter < H_FP_END || 
+                h_counter >= H_PULSE_END;
 
-    wire visible =  v_counter < V_VISIBLE_END &&
-                    h_counter < H_VISIBLE_END;
+// is tmp pixel in visible part of the grid
+wire visible =  v_counter < V_VISIBLE_END &&
+                h_counter < H_VISIBLE_END;
 
-    assign red   = visible ? 
-                   (h_counter < H_VISIBLE_HALF ? tmp_code[23:20] : tmp_code[11:8]) 
-                   : 4'h0;
+// color is black if outside of visible grid
+// on half of visible grid color should switch
+assign red   = visible ? 
+                (h_counter < H_VISIBLE_HALF ? tmp_code[23:20] : tmp_code[11:8]) 
+                : 4'h0;
 
-    assign green   = visible ? 
-                   (h_counter < H_VISIBLE_HALF ? tmp_code[19:16] : tmp_code[7:4]) 
-                   : 4'h0;
+assign green   = visible ? 
+                (h_counter < H_VISIBLE_HALF ? tmp_code[19:16] : tmp_code[7:4]) 
+                : 4'h0;
 
-    assign blue   = visible ? 
-                   (h_counter < H_VISIBLE_HALF ? tmp_code[15:12] : tmp_code[3:0]) 
-                   : 4'h0;
-`else
-
-    reg visible;
-
-    always @(*) begin
-        visible =  v_counter < V_VISIBLE_END - 1 &&
-                   h_counter < H_VISIBLE_END - 1;
-
-        vsync_next = (v_counter < V_FP_END - 1) | (v_counter >= V_PULSE_END - 1);
-        hsync_next = (h_counter < H_FP_END - 1) | (h_counter >= H_PULSE_END - 1);
-
-        red_next   = visible ? 
-                     (h_counter < H_VISIBLE_HALF - 1 ? tmp_code[23:20] : tmp_code[11:8]) 
-                    : 4'h0;
-
-        green_next = visible ? 
-                    (h_counter < H_VISIBLE_HALF - 1 ? tmp_code[19:16] : tmp_code[7:4]) 
-                    : 4'h0;
-
-        blue_next  = visible ? 
-                     (h_counter < H_VISIBLE_HALF - 1 ? tmp_code[15:12] : tmp_code[3:0]) 
-                     : 4'h0; 
-    end
-`endif
+assign blue   = visible ? 
+                (h_counter < H_VISIBLE_HALF ? tmp_code[15:12] : tmp_code[3:0]) 
+                : 4'h0;
 
 always @(posedge clk, negedge rst_n) begin
     if(!rst_n) begin
         h_counter <= 0;
         v_counter <= 0;  
         tmp_code  <= 0;
-        `ifdef VGA_NEXT
-            red       <= 0;
-            green     <= 0;
-            blue      <= 0;
-            vsync     <= 1;
-            hsync     <= 1;
-        `endif
     end
     else begin
-        `ifdef VGA_NEXT
-            hsync <= hsync_next;
-            vsync <= vsync_next;
-            red   <= red_next;
-            blue  <= blue_next;
-            green <= green_next;
-        `endif
         if(v_counter == V_BP_END - 1) begin
+            // on last line of the grid
             if(h_counter == H_BP_END - 1) begin
+                // on last pixel and last line of the grid
                 v_counter <= 0;
                 h_counter <= 0;
+                // read new colors code on the end of displaying
                 tmp_code <= code;
             end
             else 
@@ -140,6 +96,7 @@ always @(posedge clk, negedge rst_n) begin
         end
         else begin
             if(h_counter == H_BP_END - 1) begin
+                // on last pixel of line but not last line
                 h_counter <= 0;
                 v_counter <= v_counter + 1;
             end

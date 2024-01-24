@@ -1,3 +1,6 @@
 src/simulation/modules/alu.v
 src/simulation/modules/register.v
+src/simulation/modules/memory.v
+src/simulation/modules/dut.v
+src/simulation/tb.v
 src/simulation/top.v

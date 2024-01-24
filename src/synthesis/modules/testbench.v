@@ -231,7 +231,7 @@ end
 // end
 
 always @(led) begin
-    $display("---LED---\n%b\n---------", led);
+    $display("---LED---\n%d\n---------", led);
 end
 
 always @(hex) begin
@@ -312,12 +312,6 @@ always @(hex) begin
         7'h79: $display("%h", 4'b1110);
         7'h71: $display("%h", 4'b1111);
     endcase
-
-    // if ((~hex[13:7] == 7'h06) && (~hex[6:0] == 7'h06)) begin
-    //     #(100); 
-    //     btn[0] <= 1;
-    //     #(30) btn[0] <= 0;
-    // end
 
     $display("\n---------");
 end
