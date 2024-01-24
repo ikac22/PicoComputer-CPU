@@ -58,9 +58,6 @@ module cpu #(
     //// PC REGISTER ////
     reg                     ldPC;
     reg                     incPC;
-    `ifdef TEST
-        wire [ADDR_WIDTH-1:0] toutPC;
-    `endif
     register #(.DATA_WIDTH(ADDR_WIDTH)) u_pc(
         .clk(clk),
         .rst_n(rst_n),
@@ -68,9 +65,6 @@ module cpu #(
         .in(6'd8),
         .inc(incPC),
         .out(pc)
-    `ifdef TEST
-      , .tout(toutPC)
-    `endif
     );
 
     //// SP REGISTER ////
