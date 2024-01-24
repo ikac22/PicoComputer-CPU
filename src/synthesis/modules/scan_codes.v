@@ -24,7 +24,7 @@ always @(*) begin
         //  1       2       3       4       5       6       7       8       9       0
             'hF016, 'hF01E, 'hF026, 'hF025, 'hF02E, 'hF036, 'hF03D, 'hF03E, 'hF046, 'hF045,
         //  A       B       C       D       E       F
-            'hF01C, 'hF032, 'hF021, 'hF023, 'hF024, 'hF02B: new_code = code != in_code; // not good probably but works
+            'hF01C, 'hF032, 'hF021, 'hF023, 'hF024, 'hF02B: new_code = code != in_code; // not good probably but works // TODO: Fix
             default: new_code = 0;
         endcase
 
