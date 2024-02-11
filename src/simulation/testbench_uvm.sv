@@ -51,7 +51,7 @@ class generator extends uvm_sequence;
 		super.new(name);
 	endfunction
 	
-	int num = 20;
+	int num = 100;
 	
 	virtual task body();
 		for (int i = 0; i < num; i++) begin
@@ -212,9 +212,9 @@ class scoreboard extends uvm_scoreboard;
         else if (item.dec)
 			reg4 = reg4 - 4'h1;
         else if (item.sr)
-			reg4 = {ir, reg4[3:1]};
+			reg4 = {item.ir, reg4[3:1]};
         else if (item.sl)
-			reg4 = {reg4[2:0], il};
+			reg4 = {reg4[2:0], item.il};
 
 	endfunction
 	
@@ -288,7 +288,6 @@ interface reg4_if (
 	input bit clk
 );
 
-    logic clk;
     logic rst_n;
     logic cl;
     logic ld;
@@ -299,7 +298,7 @@ interface reg4_if (
     logic ir;
     logic sl;
     logic il;
-    logic [3:0] ou;
+    logic [3:0] out;
 
 endinterface
 

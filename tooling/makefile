@@ -34,7 +34,7 @@ SIMUL_WAVEFORM_FILE = ./waveform.wlf
 SIMUL_VLOG_LOG_FILE = ./vlog_compile.log
 # 1 (yes) -> Questa SIM
 # 0 (no)  -> ModelSim
-SIMUL_IS_QUESTA_USED = 0
+SIMUL_IS_QUESTA_USED = 1
 # either empty variable or path ending with \\ i.e. double backslash
 # C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\ 
 # C:\\"Program Files"\\questasim64_10.4c\\win64\\ 
@@ -45,6 +45,12 @@ ifeq ($(PLATFORM_WINDOWS), 1)
 # SIMUL_TOOL_EXE_DIR_PATH = C:\\"Program Files"\\altera\\13.1\\modelsim_ase\\win32aloem\\
 
 SIMUL_TOOL_EXE_DIR_PATH = C:\\altera\\13.0sp1\\modelsim_ase\\win32aloem\\
+
+ifeq ($(SIMUL_IS_QUESTA_USED), 1)
+
+SIMUL_TOOL_EXE_DIR_PATH = C:\\questasim64_10.4c\\win64\\
+
+endif
 
 else
 
