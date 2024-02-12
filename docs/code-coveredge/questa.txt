@@ -1,0 +1,5 @@
+vlib work
+vmap work work
+vlog -coveropt 3 +cover +acc register.v testbench_uvm.sv
+vsim -coverage -vopt work.testbench_uvm -c -do "coverage save -onexit -directive -codeAll reg8_cov.ucdb; run -all"
+vcover report -html reg8_cov.ucdb
