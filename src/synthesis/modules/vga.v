@@ -42,7 +42,7 @@ localparam  V_VISIBLE_START  = 0,
             V_BP_END        = 666;
 
 localparam  H_VISIBLE_START  = 0, 
-            H_VISIBLE_HALF   = 400,
+            H_VISIBLE_HALF   = 401,
             H_VISIBLE_END    = 800, 
             H_FP_END        = 856,
             H_PULSE_END     = 976,
